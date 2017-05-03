@@ -1,4 +1,4 @@
-var WINDOW_WIDTH = 1024;               //屏幕宽度
+var WINDOW_WIDTH = 1240;               //屏幕宽度
 var WINDOW_HEIGHT = 700;               //屏幕高度
 var curShowTimeSeconds = 0;            //当前的时间
 
@@ -9,17 +9,13 @@ var MARGIN_TOP = 40;                   //上边距
 var balls = [];                        //生成　散落小球的数组
 const colors = ["#33B5E5", "#0099CC", "#AA66CC", "#9933CC", "#99CC00", "#669900", "#FFBB33", "#FF8800", "#FF4444", "#CC0000"]　    //生成小球的随机色；
 
-// 原因是得到的num值是大于9的，超出了数组的范围，为什么会大于9呢？因为我们要做的倒计时时分秒都是两位数的，所以要控制在四天之内(100/24=4)，不然num值会大于9。
-var endTime = new Date(2017, 4, 5, 18, 47, 52);         //截止时间
-console.log(endTime);
-
 //获取现在时间 距离截止时间的时差
 function getCurShowTimeSeconds() {
-    var curTime = new Date(2017, 4, 3, 18, 66, 18);
-    var ret = endTime.getTime() - curTime.getTime();    //时差毫秒
-    ret = Math.round(ret / 1000);   //转化成秒
-    return ret > 0 ? ret : 0;
+    var curTime = new Date();
+    var ret = curTime.getHours() * 3600 + curTime.getMinutes() * 60 + curTime.getSeconds();
+    return ret;
 }
+
 
 window.onload = function () {
     var canvas = document.getElementById('canvas');
@@ -69,7 +65,7 @@ function render(cxt) {
 // 更新时间
 function update() {
     //重新获得一下时间            因为update是在setInterval里面所以现在的时间变了
-    var nextShowTimeSeconds = getCurShowTimeSeconds();    
+    var nextShowTimeSeconds = getCurShowTimeSeconds();
     //重新获得时间的小时分钟秒     
     var nextHrs = parseInt(nextShowTimeSeconds / 3600);
     var nextMin = parseInt((nextShowTimeSeconds - nextHrs * 3600) / 60);
@@ -79,7 +75,7 @@ function update() {
     var curMin = parseInt((curShowTimeSeconds - curHrs * 3600) / 60);
     var curSed = curShowTimeSeconds % 60;
     //如果时间发生了改变    判断其秒针是否改变就可以了
-    if (nextSed != curSed) {   
+    if (nextSed != curSed) {
 
         //一下是针对各个位置时间显示判断是否要在其对应的位置绘制七彩小球
         if (parseInt(curHrs / 10) != parseInt(nextHrs / 10)) {
@@ -118,6 +114,21 @@ function updateBalls() {
             balls[i].vy = -balls[i].vy * 0.75
         }
     }
+    //性能优化，不在屏幕内的小球清除出数组
+
+    //cnt来记录当前在屏幕内的小球数量
+    var cnt = 0;
+    for (var i = 0; i < balls.length; i++) {
+        // 如果这个小球的右边缘仍然大于0,||这个小球的左边缘仍然小于canvas画布的宽度  
+        if (balls[i].x + RADIUS > 0 || balls[i].x - RADIUS < WINDOW_WIDTH) {
+            //如果符合这个条件cnt++     因为balls[i]是一直在循环遍历的所以肯定大于balls[cnt++]
+            balls[cnt++] = balls[i];
+        }
+
+    } while (balls.length > cnt) {
+        balls.pop();
+    }
+
 }
 
 //绘制在原来位置基础上下落的七彩小球
